@@ -1,25 +1,7 @@
-# Khai báo nhóm — chỉ điền khi làm nhóm
+# Khai báo bài tập cá nhân
 
-Nếu làm cá nhân, không cần đưa file này vào repo nộp. Nếu làm nhóm, mỗi thành
-viên nộp repo cá nhân và sao chép/điền cùng bảng thành viên dưới đây trong repo
-của mình.
-
-## Nhóm
-
-- Tên nhóm:
-- Kênh liên lạc dùng để phối hợp:
-- Cách phân chia review và kiểm chứng evidence:
-
-| Họ và tên | MSSV | Vai trò / phần việc | Artifact tự sở hữu |
-| --- | --- | --- | --- |
-|  |  |  |  |
-|  |  |  |  |
-|  |  |  |  |
-
-## Phần đóng góp và học được của người nộp repo này
-
-- Họ và tên / MSSV:
-- Tôi trực tiếp tạo hoặc chỉnh sửa những artifact nào:
-- Finding hoặc quyết định annotation tôi chịu trách nhiệm:
-- Tôi học được gì về identity, occlusion, MOT hoặc ReID:
-- Điều tôi đã kiểm lại độc lập trước khi nộp:
+- **Họ và tên:** Nguyễn Thị My
+- **Mã sinh viên (MSSV):** 2A202602061
+- **Hình thức thực hiện:** Bài tập cá nhân (Individual Submission)
+- **Lộ trình:** Level 2 -> Level 3 (Day 3 - Video Tracking)
+- **Tất cả các artifact:** Tự thực hiện độc lập, tự gán nhãn CVAT clip_01 và clip_02, tự chạy thí nghiệm ByteTrack và BoT-SORT+ReID.
