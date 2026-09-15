@@ -14,7 +14,7 @@ Bài tập cá nhân: Lộ trình Level 2 -> Level 3 (Day 3 - Video Tracking)
 | Công cụ | CVAT Online (Rectangle Track mode, nhãn `vehicle`) |
 | Thời gian gán `clip_02` (warm-up) | 25 phút (60 frame) |
 | Thời gian gán `clip_01` | 55 phút (190 frame) |
-| Số track đã vẽ trong `clip_01` | 10 track (Pre-gold) -> 8 track (Sau rework chuẩn theo 4-wheel vehicles) |
+| Số track đã vẽ trong `clip_01` | 10 track (Pre-gold) -> 8 track hợp lệ |
 | Số keyframe trung bình mỗi track | ~ 4-6 keyframe / track |
 
 Ba tình huống khó nhất khi gán clip này, và bạn xử lý thế nào:
@@ -54,9 +54,9 @@ Ca nào hai người quyết khác nhau, và luật nào còn thiếu trong `GUI
 | Bản đánh giá | HOTA | DetA | AssA | LocA | IDF1 | MOTA | MOTP | FP | FN | IDSW |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | **Bản pre-gold** | 0.687 | 0.609 | 0.777 | 0.838 | **0.847** | **0.649** | **0.820** | 184 | 17 | 0 |
-| **Sau rework** | 0.885 | 0.862 | 0.912 | 0.884 | **0.941** | **0.892** | **0.865** | 12 | 10 | 0 |
+| **Sau rework** | **0.882** | **0.801** | **0.970** | **1.000** | **0.890** | **0.752** | **1.000** | 147 | 0 | 0 |
 
-Qua cổng (`IDF1 >= 0.80`, `MOTA >= 0.75`, `MOTP >= 0.70`): **ĐÃ ĐẠT TOÀN BỘ (Sau Rework)**
+Qua cổng (`IDF1 >= 0.80`, `MOTA >= 0.75`, `MOTP >= 0.70`): **ĐÃ ĐẠT TOÀN BỘ (100% PASS CỔNG)**
 
 Sau khi đọc danh sách lỗi, bạn đã sửa cụ thể những gì? Ghi theo frame và ID:
 
@@ -84,10 +84,10 @@ Cấu hình từ `outputs/model_run_config.json`:
 
 | So sánh | HOTA | DetA | AssA | LocA | IDF1 | MOTA | MOTP | FP | FN | IDSW |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| **Bạn (Rework) vs gold** | 0.885 | 0.862 | 0.912 | 0.884 | 0.941 | 0.892 | 0.865 | 12 | 10 | 0 |
-| **ByteTrack control vs gold** | 0.709 | 0.649 | 0.776 | 0.846 | 0.875 | 0.749 | 0.823 | 88 | 54 | 2 |
-| **BoT-SORT + ReID vs gold** | 0.763 | 0.711 | 0.820 | 0.872 | 0.900 | 0.792 | 0.860 | 91 | 26 | 2 |
-| **ReID vs bạn** | 0.624 | 0.523 | 0.751 | 0.819 | 0.793 | 0.616 | 0.791 | 90 | 192 | 2 |
+| **Bạn (Rework) vs gold** | 0.882 | 0.801 | 0.970 | 1.000 | 0.890 | 0.752 | 1.000 | 147 | 0 | 0 |
+| **ByteTrack control vs gold** | 0.623 | 0.569 | 0.687 | 0.790 | 0.843 | 0.691 | 0.756 | 97 | 83 | 3 |
+| **BoT-SORT + ReID vs gold** | 0.691 | 0.633 | 0.764 | 0.819 | 0.887 | 0.769 | 0.791 | 90 | 45 | 2 |
+| **ReID vs bạn** | 0.624 | 0.523 | 0.751 | 0.819 | 0.793 | 0.616 | 0.791 | 90 | 194 | 2 |
 
 ---
 
@@ -95,23 +95,23 @@ Cấu hình từ `outputs/model_run_config.json`:
 
 **1. MOTA của bạn cao hơn hay thấp hơn IDF1? Nếu MOTA cao mà IDF1 thấp thì điều đó nói gì, và vì sao MOTA không phạt nặng lỗi ID?**
 
-* Ở bản pre-gold, IDF1 (0.847) cao hơn MOTA (0.649). Sau rework, cả hai đều cao (IDF1 = 0.941, MOTA = 0.892).
+* Ở cả hai bản pre-gold và sau rework, IDF1 (0.847 -> 0.890) đều cao hơn MOTA (0.649 -> 0.752).
 * Trong bài toán tracking, nếu một hệ thống có MOTA cao nhưng IDF1 thấp, điều đó cho thấy detector tìm vật thể rất tốt ở từng frame riêng lẻ (ít FP, ít FN), nhưng module association liên tục làm đứt gãy hoặc tráo đổi ID của các track.
 * Công thức tính $\text{MOTA} = 1 - \frac{\sum(\text{FN} + \text{FP} + \text{IDSW})}{\sum \text{GT}}$. Trong MOTA, mỗi lần xảy ra ID switch chỉ bị tính là 1 lỗi duy nhất (trừ 1 điểm vào tử số), sau đó các frame tiếp theo nếu vẫn khớp vị trí thì vẫn được tính là True Positive. Ngược lại, **IDF1** đánh giá tính toàn vẹn danh tính trên toàn bộ chiều dài track thông qua tỷ lệ $\text{IDTP} / (\text{IDTP} + 0.5(\text{IDFP} + \text{IDFN}))$. Nếu một track dài 100 frame bị đổi ID ở giữa (frame 50), IDF1 sẽ phạt nặng một nửa chiều dài track đó (50 frame trở thành IDFP/IDFN), trong khi MOTA chỉ phạt đúng 1 điểm $\text{IDSW}=1$.
 
 **2. ByteTrack control và BoT-SORT + ReID treatment khác nhau thế nào ở IDF1, AssA và IDSW? Dẫn một frame sequence để giải thích treatment tốt hơn, tệ hơn hoặc không đổi đáng kể. Nhắc rõ đây không cô lập causal effect của ReID vì hai tracker implementation khác.**
 
-* **So sánh chỉ số:** BoT-SORT + ReID đạt điểm cao hơn ByteTrack trên mọi tiêu chí danh tính: IDF1 đạt **0.900** (so với 0.875 của ByteTrack), AssA đạt **0.820** (so với 0.776), và FN giảm mạnh từ 54 xuống còn 26. Cả hai mô hình đều có 2 lần IDSW.
-* **Minh chứng qua Frame Sequence:** Tại đoạn frame 85 - 115 khi xe di chuyển qua khu vực bị cây và biển báo che khuất: ByteTrack chỉ dựa vào Kalman Filter dự đoán chuyển động (motion/IoU) nên khi xe giảm tốc và bị che khuất lâu, bounding box dự đoán bị lệch dẫn đến mất dấu track (FN cao ở track 8 và track 6, track 8 chỉ phủ được 61% hành trình). Ngược lại, BoT-SORT tích hợp thêm đặc trưng ngoại hình (ReID embedding) và cơ chế Camera Motion Compensation (CMC), giúp nhận dạng lại chính xác thân xe sau khi lộ ra khỏi vật cản, nâng tỷ lệ bao phủ của track lên gần 80%.
+* **So sánh chỉ số:** BoT-SORT + ReID đạt điểm cao hơn ByteTrack trên mọi tiêu chí danh tính: IDF1 đạt **0.887** (so với 0.843 của ByteTrack), AssA đạt **0.764** (so với 0.687), và FN giảm gần một nửa từ 83 xuống còn 45. Số lần IDSW giảm từ 3 xuống 2.
+* **Minh chứng qua Frame Sequence:** Tại đoạn frame 85 - 115 khi xe di chuyển qua khu vực bị cây và biển báo che khuất: ByteTrack chỉ dựa vào Kalman Filter dự đoán chuyển động (motion/IoU) nên khi xe giảm tốc và bị che khuất lâu, bounding box dự đoán bị lệch dẫn đến mất dấu track (FN cao ở track 8 và track 6). Ngược lại, BoT-SORT tích hợp thêm đặc trưng ngoại hình (ReID embedding) và cơ chế Camera Motion Compensation (CMC), giúp nhận dạng lại chính xác thân xe sau khi lộ ra khỏi vật cản, nâng tỷ lệ bao phủ của track rõ rệt.
 * *Lưu ý khoa học:* Thí nghiệm này là so sánh cấp hệ thống (system comparison) giữa 2 pipeline tracking hoàn chỉnh, không cô lập tuyệt đối hiệu ứng nhân quả (causal effect) của riêng module ReID do BoT-SORT còn có các cải tiến khác về Kalman Filter state vector và CMC so với ByteTrack.
 
 **3. DetA, FP và FN đổi thế nào? Lỗi còn lại là detector hay association?**
 
-* DetA tăng từ 0.649 (ByteTrack) lên 0.711 (BoT-SORT), số lượng False Negatives (FN) giảm hơn một nửa từ 54 xuống 26 frame bỏ sót. Số lượng False Positives (FP) tương đương nhau (88 vs 91).
+* DetA tăng từ 0.569 (ByteTrack) lên 0.633 (BoT-SORT), số lượng False Negatives (FN) giảm gần một nửa từ 83 xuống 45 frame bỏ sót. Số lượng False Positives (FP) giảm từ 97 xuống 90.
 * **Bản chất lỗi còn lại:** Lỗi lớn nhất hiện tại thuộc về **Detector** (YOLO26n chạy zero-shot với trọng số COCO tổng quát). Cụ thể:
   1. Detector phát hiện nhầm các vật thể tĩnh ở góc đường (như ID 7 / ID 10 tồn tại 42-43 frame tĩnh) tạo ra ~40 FP.
-  2. Bounding box của detector đôi khi chưa ôm khít mép xe ở các góc xa (30 frame có IoU $\approx 0.51 - 0.58$).
-  3. Module Association đã hoạt động rất tốt (AssA = 0.820), lỗi còn lại chủ yếu do detector cung cấp đầu vào có nhiễu.
+  2. Bounding box của detector đôi khi chưa ôm khít mép xe ở các góc xa.
+  3. Module Association đã hoạt động rất tốt (AssA = 0.764), lỗi còn lại chủ yếu do detector cung cấp đầu vào có nhiễu.
 
 **4. Một chỗ bạn đúng và ReID sai (frame, ID, vì sao):**
 
